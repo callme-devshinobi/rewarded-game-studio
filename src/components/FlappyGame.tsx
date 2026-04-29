@@ -3,13 +3,12 @@ import { useFlappyGame } from "@/hooks/useFlappyGame";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
 import { Button } from "@/components/ui/button";
 import { RewardedAdModal } from "@/components/RewardedAdModal";
-import { Trophy, Zap, RotateCcw, Play } from "lucide-react";
+import { Trophy, Zap } from "lucide-react";
 
 export function FlappyGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { status, score, best, flap, restart, continueAfterAd } = useFlappyGame(canvasRef);
+  const { status, score, best, flap, continueAfterAd } = useFlappyGame(canvasRef);
   const { state: adState, provider, showRewardedAd, reset: resetAd } = useRewardedAd();
-  const [usedContinue, setUsedContinue] = useState(false);
   const [adOpen, setAdOpen] = useState(false);
 
   const handleContinue = () => {
@@ -17,7 +16,6 @@ export function FlappyGame() {
     showRewardedAd(
       () => {
         // Reward earned
-        setUsedContinue(true);
         window.setTimeout(() => {
           setAdOpen(false);
           resetAd();
@@ -25,17 +23,11 @@ export function FlappyGame() {
         }, 900);
       },
       () => {
-        // Dismissed without reward
+        // Dismissed without reward — stay on game over
         setAdOpen(false);
         resetAd();
       }
     );
-  };
-
-  const handleRestart = () => {
-    setUsedContinue(false);
-    resetAd();
-    restart();
   };
 
   return (
@@ -69,12 +61,12 @@ export function FlappyGame() {
       {status === "ready" && (
         <div className="pointer-events-none absolute top-20 left-1/2 -translate-x-1/2 animate-pop-in">
           <div className="bg-card/90 backdrop-blur px-5 py-2 rounded-full border border-border shadow-arcade">
-            <span className="font-arcade text-xs text-primary">SKY HOPPER</span>
+            <span className="font-arcade text-xs text-primary">WITCH HOPPER</span>
           </div>
         </div>
       )}
 
-      {/* Game Over overlay */}
+      {/* Game Over overlay — only way forward is watching an ad to continue */}
       {status === "gameover" && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm p-6">
           <div className="w-full max-w-xs bg-card border border-border rounded-2xl p-6 shadow-arcade animate-pop-in">
@@ -91,32 +83,18 @@ export function FlappyGame() {
               </div>
             </div>
 
-            {!usedContinue && score > 0 && (
-              <Button
-                onClick={handleContinue}
-                className="w-full mb-2 bg-gradient-primary text-primary-foreground hover:opacity-90 font-semibold animate-pulse-glow"
-                size="lg"
-              >
-                <Zap className="w-4 h-4 mr-2 fill-current" />
-                Continue (Watch Ad)
-              </Button>
-            )}
-
             <Button
-              onClick={handleRestart}
-              variant="secondary"
-              className="w-full"
+              onClick={handleContinue}
+              className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 font-semibold animate-pulse-glow"
               size="lg"
             >
-              {usedContinue ? <RotateCcw className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-              {usedContinue ? "Play Again" : "Restart"}
+              <Zap className="w-4 h-4 mr-2 fill-current" />
+              Continue (Watch Ad)
             </Button>
 
-            {usedContinue && (
-              <p className="text-[10px] text-center text-muted-foreground mt-3">
-                One continue per run.
-              </p>
-            )}
+            <p className="text-[10px] text-center text-muted-foreground mt-3">
+              Watch a short ad to keep flying.
+            </p>
           </div>
         </div>
       )}

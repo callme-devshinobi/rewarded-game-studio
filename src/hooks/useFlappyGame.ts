@@ -12,7 +12,7 @@ const PIPE_SPEED = 180;        // px/s
 const PIPE_GAP = 170;          // gap height
 const PIPE_WIDTH = 70;
 const PIPE_INTERVAL = 1.45;    // seconds
-const BIRD_RADIUS = 16;
+const BIRD_RADIUS = 18; // witch hit radius
 const BIRD_X = 110;
 const GROUND_HEIGHT = 70;
 
@@ -67,15 +67,15 @@ export function useFlappyGame(canvasRef: React.RefObject<HTMLCanvasElement>) {
     }
     if (s.status === "playing") {
       s.birdV = FLAP_VELOCITY;
-      // tiny puff particles
-      for (let i = 0; i < 4; i++) {
+      // sparkle/broom-trail particles
+      for (let i = 0; i < 5; i++) {
         s.particles.push({
-          x: BIRD_X - 8,
-          y: s.birdY + 4,
-          vx: -40 - Math.random() * 60,
-          vy: 20 + Math.random() * 30,
-          life: 0.5,
-          color: "rgba(255,255,255,0.8)",
+          x: BIRD_X - 14,
+          y: s.birdY + 6,
+          vx: -50 - Math.random() * 70,
+          vy: 10 + Math.random() * 30,
+          life: 0.55,
+          color: i % 2 ? "hsl(280 90% 70%)" : "hsl(45 100% 65%)",
         });
       }
     }
@@ -225,12 +225,23 @@ export function useFlappyGame(canvasRef: React.RefObject<HTMLCanvasElement>) {
     const draw = (ctx: CanvasRenderingContext2D, s: typeof stateRef.current) => {
       const { width: w, height: h } = s;
 
-      // Sky gradient
+      // Dusk sky gradient (witchy)
       const sky = ctx.createLinearGradient(0, 0, 0, h);
-      sky.addColorStop(0, "hsl(200, 95%, 70%)");
-      sky.addColorStop(1, "hsl(25, 95%, 78%)");
+      sky.addColorStop(0, "hsl(260, 60%, 22%)");
+      sky.addColorStop(0.6, "hsl(290, 55%, 40%)");
+      sky.addColorStop(1, "hsl(20, 85%, 60%)");
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, w, h);
+
+      // Moon
+      ctx.fillStyle = "hsl(50, 100%, 88%)";
+      ctx.beginPath();
+      ctx.arc(w - 60, 70, 26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "hsl(260, 60%, 22%)";
+      ctx.beginPath();
+      ctx.arc(w - 50, 64, 22, 0, Math.PI * 2);
+      ctx.fill();
 
       // Distant clouds (parallax)
       ctx.fillStyle = "rgba(255,255,255,0.6)";
@@ -270,8 +281,8 @@ export function useFlappyGame(canvasRef: React.RefObject<HTMLCanvasElement>) {
       }
       ctx.globalAlpha = 1;
 
-      // Bird
-      drawBird(ctx, BIRD_X, s.birdY, s.rotation, s.frame);
+      // Witch on broomstick
+      drawWitch(ctx, BIRD_X, s.birdY, s.rotation, s.frame);
 
       // Ready overlay hint
       if (s.status === "ready") {
@@ -280,7 +291,7 @@ export function useFlappyGame(canvasRef: React.RefObject<HTMLCanvasElement>) {
         ctx.fillStyle = "white";
         ctx.font = "bold 20px Inter, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("Tap or press Space to flap", w / 2, h / 2 + 80);
+        ctx.fillText("Tap or press Space to fly", w / 2, h / 2 + 80);
       }
     };
 
@@ -354,7 +365,7 @@ function drawPipe(
   ctx.fillRect(x + 6, y, 4, h);
 }
 
-function drawBird(
+function drawWitch(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -365,45 +376,105 @@ function drawBird(
   ctx.translate(x, y);
   ctx.rotate(rot);
 
-  // Body
-  const grad = ctx.createRadialGradient(-4, -4, 4, 0, 0, BIRD_RADIUS + 4);
-  grad.addColorStop(0, "hsl(50, 100%, 70%)");
-  grad.addColorStop(1, "hsl(35, 95%, 50%)");
-  ctx.fillStyle = grad;
+  // ---------- Broomstick ----------
+  // Handle
+  ctx.strokeStyle = "hsl(25, 60%, 25%)";
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.arc(0, 0, BIRD_RADIUS, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "hsl(25, 90%, 30%)";
-  ctx.lineWidth = 2;
+  ctx.moveTo(-22, 14);
+  ctx.lineTo(20, 10);
+  ctx.stroke();
+  // Handle highlight
+  ctx.strokeStyle = "hsl(30, 70%, 45%)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-18, 13);
+  ctx.lineTo(18, 9);
   ctx.stroke();
 
-  // Wing (flaps)
-  const wingPhase = Math.sin(frame * 0.4) * 0.5;
-  ctx.fillStyle = "hsl(35, 85%, 55%)";
+  // Bristles (back of broom)
+  const bristlePhase = Math.sin(frame * 0.5) * 1.5;
+  ctx.strokeStyle = "hsl(40, 80%, 55%)";
+  ctx.lineWidth = 2;
+  for (let i = -6; i <= 6; i += 2) {
+    ctx.beginPath();
+    ctx.moveTo(-22, 14);
+    ctx.lineTo(-38 - Math.abs(i) * 0.4, 14 + i + bristlePhase);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "hsl(30, 70%, 35%)";
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.ellipse(-2, 4 + wingPhase * 4, 10, 6 + wingPhase * 2, -0.3, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(-22, 8);
+  ctx.lineTo(-22, 20);
   ctx.stroke();
+
+  // ---------- Witch body (cloak) ----------
+  ctx.fillStyle = "hsl(265, 55%, 25%)";
+  ctx.beginPath();
+  ctx.moveTo(-10, 12);
+  ctx.quadraticCurveTo(-2, -4, 8, 12);
+  ctx.quadraticCurveTo(0, 16, -10, 12);
+  ctx.fill();
+
+  // Cloak trim
+  ctx.fillStyle = "hsl(280, 60%, 45%)";
+  ctx.beginPath();
+  ctx.ellipse(-1, 12, 10, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ---------- Head ----------
+  ctx.fillStyle = "hsl(95, 35%, 65%)"; // green skin
+  ctx.beginPath();
+  ctx.arc(0, -6, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "hsl(95, 40%, 30%)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Hair (orange wisp trailing back)
+  ctx.fillStyle = "hsl(20, 90%, 55%)";
+  ctx.beginPath();
+  ctx.moveTo(-5, -4);
+  ctx.quadraticCurveTo(-16, 0, -18, 6);
+  ctx.quadraticCurveTo(-10, 2, -4, 2);
+  ctx.fill();
 
   // Eye
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(7, -5, 5, 0, Math.PI * 2);
-  ctx.fill();
   ctx.fillStyle = "hsl(215, 60%, 10%)";
   ctx.beginPath();
-  ctx.arc(8, -5, 2.4, 0, Math.PI * 2);
+  ctx.arc(3, -7, 1.6, 0, Math.PI * 2);
   ctx.fill();
 
-  // Beak
-  ctx.fillStyle = "hsl(15, 90%, 50%)";
+  // Nose (long witchy)
+  ctx.fillStyle = "hsl(95, 35%, 55%)";
   ctx.beginPath();
-  ctx.moveTo(12, -1);
-  ctx.lineTo(22, 1);
-  ctx.lineTo(12, 5);
+  ctx.moveTo(6, -6);
+  ctx.lineTo(12, -3);
+  ctx.lineTo(6, -3);
   ctx.closePath();
   ctx.fill();
-  ctx.stroke();
+
+  // ---------- Hat ----------
+  ctx.fillStyle = "hsl(265, 60%, 18%)";
+  // Brim
+  ctx.beginPath();
+  ctx.ellipse(-1, -12, 12, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Cone
+  ctx.beginPath();
+  ctx.moveTo(-7, -12);
+  ctx.lineTo(2, -26);
+  ctx.lineTo(6, -12);
+  ctx.closePath();
+  ctx.fill();
+  // Hat band
+  ctx.fillStyle = "hsl(45, 100%, 55%)";
+  ctx.fillRect(-6, -13.5, 11, 2);
+  // Buckle
+  ctx.fillStyle = "hsl(45, 100%, 70%)";
+  ctx.fillRect(-1, -13.7, 2.5, 2.4);
 
   ctx.restore();
 }
