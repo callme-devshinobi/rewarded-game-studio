@@ -25,10 +25,7 @@ export function RewardedAdModal({ open, state, provider }: RewardedAdModalProps)
 
   return (
     <Dialog open={open}>
-      <DialogContent
-        hideClose
-        className="max-w-sm border-border bg-card p-0 overflow-hidden"
-      >
+      <DialogContent className="max-w-sm border-border bg-card p-0 overflow-hidden [&>button]:hidden">
         <div className="bg-gradient-night p-6 flex flex-col items-center gap-4">
           <div className="text-xs uppercase tracking-widest text-muted-foreground">
             {provider === "adsense" ? "Sponsored" : "Demo Ad"}
