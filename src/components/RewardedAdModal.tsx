@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 interface RewardedAdModalProps {
   open: boolean;
   state: AdState;
-  provider: "adsense" | "mock";
+  provider: "adsterra";
 }
 
 export function RewardedAdModal({ open, state, provider }: RewardedAdModalProps) {
@@ -26,36 +26,23 @@ export function RewardedAdModal({ open, state, provider }: RewardedAdModalProps)
   return (
     <Dialog open={open}>
       <DialogContent className="max-w-sm border-border bg-card p-0 overflow-hidden [&>button]:hidden">
-        <div className="bg-gradient-night p-6 flex flex-col items-center gap-4">
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">
-            {provider === "adsense" ? "Sponsored" : "Demo Ad"}
-          </div>
+        <div className="bg-gradient-night p-5 flex flex-col items-center gap-4">
+          <div className="text-xs uppercase tracking-widest text-muted-foreground">Sponsored</div>
 
-          <div className="w-full aspect-video rounded-xl bg-gradient-primary shadow-arcade flex items-center justify-center relative overflow-hidden">
-            {state === "loading" && (
-              <Loader2 className="w-12 h-12 text-primary-foreground animate-spin" />
-            )}
-            {state === "playing" && (
-              <div className="text-center text-primary-foreground">
-                <PlayCircle className="w-12 h-12 mx-auto mb-2 animate-pulse" />
-                <div className="font-arcade text-sm">YOUR AD HERE</div>
-                <div className="text-xs mt-1 opacity-80">
-                  {secondsLeft > 0 ? `${secondsLeft}s remaining` : "Almost done…"}
-                </div>
-              </div>
-            )}
-            {state === "rewarded" && (
-              <div className="text-center text-primary-foreground font-arcade text-sm animate-pop-in">
-                ✓ REWARD EARNED
-              </div>
-            )}
-          </div>
+          <iframe
+            title="Adsterra advertisement"
+            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+            srcDoc={`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;display:flex;justify-content:center;overflow:hidden"><script>var atOptions={key:'9d4c92b952dfd78e2f21bc94ea9fe232',format:'iframe',height:60,width:468,params:{}};</script><script src="https://www.highrevenueformat.com/9d4c92b952dfd78e2f21bc94ea9fe232/invoke.js"></script></body></html>`}
+            className="h-[60px] w-full max-w-[468px] border-0 bg-background"
+          />
 
-          <p className="text-xs text-muted-foreground text-center">
-            {provider === "mock"
-              ? "Wire up Google AdSense H5 Games Ads in index.html to serve real rewarded ads."
-              : "Watch the full ad to receive your reward."}
-          </p>
+          <div className="flex h-10 items-center justify-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+            {state === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
+            {state === "loading" && "Loading advertisement…"}
+            {state === "playing" && `Continue available in ${secondsLeft} seconds`}
+            {state === "rewarded" && <><PlayCircle className="h-4 w-4" /> Continue unlocked</>}
+            {(state === "dismissed" || state === "error") && "Advertisement unavailable"}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
